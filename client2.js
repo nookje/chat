@@ -46,7 +46,15 @@ $(document).ready(function() {
 
     $("#send").click(function() {
       var msg = $("#msg").val();
-      socket.emit("send", msg);
+
+        socketMsg = {
+          type: 'chat',
+          damage: 0,
+          weapon: '0',
+          message: msg
+        };
+        socket.emit("send", socketMsg);
+
       $("#msg").val("");
     });
 

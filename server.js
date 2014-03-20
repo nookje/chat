@@ -1,5 +1,6 @@
 var http        = require("http");
 var io          = require("socket.io");
+var crypto      = require('crypto');
 
 var Room        = require('./room.js');
 var Helpers     = require('./helpers.js');
@@ -7,6 +8,7 @@ var Helpers     = new Helpers();
 
 var socket      = io.listen(8000, "127.0.0.1");
 
+var mcryptKey   = 'KCtHPRqYy8WbWNt4';
 var people      = {};
 var rooms       = {};
 
@@ -15,6 +17,14 @@ socket.set("log level", 1);
 socket.on("connection", function (client) {
 
     client.on("joinserver", function(joinData) {
+
+        // try{
+        //     joinData = mcryptDecrypt(joinData);
+        //     joinData = JSON.parse(joinData);
+        // } catch (err) {
+        //     console.log('join could not be decrypted');
+        //     return;
+        // }
 
         // create the room if it wasnt already created
         if (rooms[joinData.roomName] === undefined) {
@@ -58,6 +68,14 @@ socket.on("connection", function (client) {
         }
 
         if (socket.sockets.manager.roomClients[client.id]['/'+client.room] !== undefined ) {
+
+            try{
+                msg = mcryptDecrypt(msg);
+                msg = JSON.parse(msg);
+            } catch (err) {
+                console.log('message could not be decrypted');
+                return;
+            }
 
     		var message = '<img src="' + people[client.id].avatar + '"> ' + people[client.id].name + msg.message;
 
@@ -113,4 +131,21 @@ function deleteRoom(roomName)
 {
     delete rooms[roomName];
     console.log('deleting room: '  + roomName);
+}
+
+
+function mcryptDecrypt(crypted)
+{
+    // iv (initialization vector) is hidden in the encrypted message at 78% of the string
+    var positionOfIV = Math.round((crypted.length - 16)/100*78);
+
+    var iv = crypted.substr(positionOfIV, 16);
+
+    var encryptedMessage = crypted.substr(0,positionOfIV) + crypted.substr(positionOfIV+16);
+
+    var decipher = crypto.createDecipheriv('aes-128-cbc', mcryptKey, iv);
+    var decrypted = decipher.update(encryptedMessage, 'hex', 'utf-8');
+    decrypted += decipher.final('utf-8');
+
+    return decrypted;
 }
