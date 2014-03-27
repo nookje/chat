@@ -130,7 +130,7 @@ socket.on("connection", function (client) {
 function deleteRoom(roomName)
 {
     delete rooms[roomName];
-    console.log('deleting room: '  + roomName + , '. rooms left: ' + Helpers.getObjectLength(rooms));
+    console.log('deleting room: '  + roomName + '. rooms left: ' + Helpers.getObjectLength(rooms));
 }
 
 
