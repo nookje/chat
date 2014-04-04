@@ -83,9 +83,7 @@ socket.on("connection", function (client) {
                 side: people[client.id].side,
                 division: people[client.id].division,
                 message: message,
-                weapon: msg.weapon,
-                damage: msg.damage,
-                type: msg.type,
+                msg: msg,
                 avatar: people[client.id].avatar,
                 name: people[client.id].name,
             };
