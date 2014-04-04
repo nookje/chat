@@ -43,11 +43,15 @@ socket.on("connection", function (client) {
         client.room = joinData.roomName;
         client.join(joinData.roomName);
 
+        var msg = {
+            type: 'join',
+        };    
+
         var response = {
             side: joinData.side,
             division: joinData.division,
             message: '<img src="' + joinData.avatar + '"> ' + joinData.name + ' has joined the battle',
-            type: 'join',
+            msg: msg,
             name: joinData.name,
             avatar: joinData.avatar,
         };
@@ -103,11 +107,15 @@ socket.on("connection", function (client) {
             // check if room was not already deleted
             if (rooms[roomName] !== undefined) {
 
+                var msg = {
+                    type: 'leave',
+                };    
+
                 var response = {
+                    msg: msg,
                     side: people[client.id].side,
                     division: people[client.id].division,
                     message: '<img src="' + people[client.id].avatar + '"> ' + people[client.id].name + " has left the battle",
-                    type: 'leave',
                     name: people[client.id].avatar,
                     avatar: people[client.id].avatar,
                 };
