@@ -7,7 +7,7 @@
 
         <script src="bootstrap/js/bootstrap.js"></script>
         <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.css">
-        <script src="client2.js"></script>
+        <script src="client.js"></script>
 
         <style>
                 li
@@ -30,18 +30,18 @@
 <div style = "float: left; width: 1100px;">
         <div class="row">
                 <div class="span5 offset2" id="login">
-                        <form class="form-inline">
-                                <!--<input type="text" class="input-small" placeholder="Your name" id="name">-->
-                                <input type="text" class="input-small" placeholder="Room name" id="room_name">
-                                <input type="button" name="join" id="join" value="Join" class="btn btn-primary">
+                        <form method="post" action="/" class="form-inline" id="form_join">
+                                <input type="text" class="input-small" placeholder="Your name" id="name">
+                                <input type="text" class="input-small" placeholder="Room name" id="room_name" value="test">
+                                <input type="submit" name="join" id="join" value="Join" class="btn btn-primary">
                         </form>
                 </div>
 
                 <div class="span5 offset2" id="chat">
-                        <form id="2" class="form-inline">
+                        <form id="form_send" class="form-inline">
 
                                 <input type="text" class="input" placeholder="Your message" id="msg">
-                                <input type="button" name="send" id="send" value="Send" class="btn btn-success">
+                                <input type="submit" name="send" id="send" value="Send" class="btn btn-success">
                                 <!--
                                 <input type="button" name="leave" id="leave" value="Leave Room" class="btn btn-warning">
                                 -->
@@ -56,32 +56,12 @@
         <p id="createRoom"><button id="showCreateRoom">Create room</button></p>
         <p id="createRoomForm"><input type="text" id="createRoomName"><button id="createRoomBtn">Create room</button></p>
         -->
-          <div class="span2">
-                <ul id="people" class="unstyled"></ul>
-          </div>
-          <div class="span4">
-                <div id="msgsz" class="unstyled"></div>
-          </div>
-        </div>
+
 </div>
 
-<!--
-<div id="hideGame" style="float: right;display: none; ">
-        <input id="distractButton" type="button" value="Distract opponent">
-
-        <div id="clickbox" style="width: 300px; height: 150px; background-color:red; text-align: center; font-size: 22px; padding-top: 20px;"></div>
-</div>
-
-<div style="clear: both; "></div>
 
 
-<div style="height: 100px; "></div>
-<div id="player1" style="border: 2px solid #ccc; font-size: 45px; float: left; padding: 50px; margin-left: 250px;"></div>
-<div style="font-size: 45px; float: left; padding-top: 50px; margin: 0px 50px;">vs. </div>
-<div id="player2" style="border: 2px solid #ccc; font-size: 45px; float: left; padding: 50px;"></div>
--->
-
-                <div id="msgs" style="width:2010px; float: left;"></div>
+<div id="msgs" style="width:800px; border: 1px solid #ccc;"></div>
 
 </body>
 </html>
