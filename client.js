@@ -5,7 +5,7 @@ $(document).ready(function() {
 
     socket.on("chat", function(response) {
         response = JSON.parse(response);
-        $("#msgs").prepend("<div><b>" + response.name + "</b>: " + response.message + "</div>");
+        $("#msgs").prepend("<li><b>" + response.name + "</b>: " + response.message + "</li>");
     });
 
     socket.on("disconnect", function(){

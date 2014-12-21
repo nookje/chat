@@ -10,58 +10,33 @@
         <script src="client.js"></script>
 
         <style>
-            li
-            {
-                margin: 10px 0px;
-                font-family: Arial;
-                font-size: 11px;
-            }
-            li img {width: 25px; height: 25px;}
-            div.sides {
-                    width: 1000px; float:left; overflow: hidden;
-            }
-            ul.sides {
-                    width: 450px; float:left; overflow: hidden;
-            }
+
         </style>
 </head>
-<body style="width: 1120px;">
+<body>
 
-<div style = "float: left; width: 1100px;">
-        <div class="row">
-                <div class="span5 offset2" id="login">
-                        <form method="post" action="/" class="form-inline" id="form_join">
-                                <input type="text" class="input-small" placeholder="Your name" id="name">
-                                <input type="text" class="input-small" placeholder="Room name" id="room_name" value="test">
-                                <input type="submit" name="join" id="join" value="Join" class="btn btn-primary">
-                        </form>
-                </div>
+<!-- <div style = "float: left; width: 1100px;">
+    <div class="row">
+        <div class="span5 offset2" id="login">
+            <form method="post" action="/" class="form-inline" id="form_join">
+                <input type="text" class="input-small" placeholder="Your name" id="name">
+                <input type="text" class="input-small" placeholder="Room name" id="room_name" value="test">
+                <input type="submit" name="join" id="join" value="Join" class="btn btn-primary">
+            </form>
+        </div>
 
-                <div class="span5 offset2" id="chat">
-                        <form id="form_send" class="form-inline">
-
-                                <input type="text" class="input" placeholder="Your message" id="msg">
-                                <input type="submit" name="send" id="send" value="Send" class="btn btn-success">
-                                <!--
-                                <input type="button" name="leave" id="leave" value="Leave Room" class="btn btn-warning">
-                                -->
-                        </form>
-                </div>
-          </div>
-
-        <div class="row offset2">
-
-        <!--
-        <ul id="rooms"></ul>
-        <p id="createRoom"><button id="showCreateRoom">Create room</button></p>
-        <p id="createRoomForm"><input type="text" id="createRoomName"><button id="createRoomBtn">Create room</button></p>
-        -->
-
-</div>
+        <div class="span5 offset2" id="chat">
+            <form id="form_send" class="form-inline">
+                <input type="text" class="input" placeholder="Your message" id="msg">
+                <input type="submit" name="send" id="send" value="Send" class="btn btn-success">
+            </form>
+        </div>
+    </div>
+</div> -->
 
 
 
-<div id="msgs" style="width:800px; border: 1px solid #ccc;"></div>
+<ol id="msgs" style="width:300px; border: 1px solid #ccc; float: right;"></ol>
 
 </body>
 </html>
