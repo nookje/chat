@@ -5,11 +5,11 @@ $(document).ready(function() {
 
     socket.on("chat", function(response) {
         response = JSON.parse(response);
-        $("#msgs").append("<div><b>" + response.name + "</b>: " + response.message + "</div>");
+        $("#msgs").prepend("<div><b>" + response.name + "</b>: " + response.message + "</div>");
     });
 
     socket.on("disconnect", function(){
-        $("#msgs").append("<li><strong><span class='text-warning'>The server is not available</span></strong></li>");
+        $("#msgs").prepend("<li><strong><span class='text-warning'>The server is not available</span></strong></li>");
         $("#msg").attr("disabled", "disabled");
         $("#send").attr("disabled", "disabled");
     });
