@@ -5,6 +5,7 @@ $(document).ready(function() {
 
     socket.on("chat", function(response) {
         response = JSON.parse(response);
+
         $("#msgs").prepend("<li><b>" + response.name + "</b>: " + response.message + "</li>");
     });
 
@@ -18,6 +19,9 @@ $(document).ready(function() {
         joinServer();
     });
 
+    socket.on("updatePosition", function(members) {
+        updatePosition(members);
+    });
 
     $("#chat").hide();
     $("#name").focus();
@@ -83,3 +87,29 @@ function getParameterByName(name) {
     results = regex.exec(location.search);
     return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 }
+
+function updatePosition(members)
+{
+
+    members = JSON.parse(members);
+
+    $.each( members, function( key , value) {
+        $("div.player_" + value.name).removeClass('position player_' + value.name).html("");
+
+        $("#tile_" + value.position).html(value.name);
+        $("#tile_" + value.position).addClass('position player_' + value.name);
+    });
+}
+
+
+
+$( document ).ready(function() {
+    $('div.tile').click(function() {
+        var parts = this.id.split("_");
+        socketMsg = {
+            position: parts[1]
+        };
+
+        socket.emit("move", socketMsg);
+    });
+});

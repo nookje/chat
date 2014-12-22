@@ -24,7 +24,15 @@ socket.on("connection", function (client) {
         room = rooms[joinData.roomName];
 
         // room is already full
-        if (room.addPerson(client.id) === false) {
+        if (room.addPerson(client.id, joinData) === false) {
+            var response = {
+                message: ' room is full',
+                name: joinData.name,
+            };
+
+            client.emit("chat", JSON.stringify(response));
+
+            console.log('room full');
             return false;
         }
 
@@ -32,6 +40,16 @@ socket.on("connection", function (client) {
         
         client.room = joinData.roomName;
         client.join(joinData.roomName);
+
+        var person = room.getPerson(client.id);
+
+        if (room.getCount() == 1) {
+            position = Helpers.randomIntFromInterval(1,16);
+        } else {
+            position = Helpers.randomIntFromInterval(506,522);
+        }
+
+        person.position = position;
 
         var msg = {
             type: 'join',
@@ -42,6 +60,8 @@ socket.on("connection", function (client) {
             name: joinData.name,
         };
         socket.sockets.in(joinData.roomName).emit("chat", JSON.stringify(response));
+
+        socket.sockets.in(joinData.roomName).emit("updatePosition", JSON.stringify(room.getPersons()));
 
         console.log('new client connected: ' + Helpers.getObjectLength(people));
     });
@@ -94,8 +114,38 @@ socket.on("connection", function (client) {
             }
         }
     });
+
+
+    client.on("move", function(data) {
+
+        // room was cleaned by the "cron" so kick the user out
+        if (client.room !== undefined && rooms[client.room] === undefined) {
+            client.emit("update", "Room was deleted, please connect to another room.");
+            client.leave(client.room);
+            delete client.room;
+            return;
+        }
+
+        if (socket.sockets.manager.roomClients[client.id]['/'+client.room] !== undefined ) {
+            
+            room = rooms[client.room];
+
+            var person = room.getPerson(client.id);
+
+            person.position = data.position;
+
+            socket.sockets.in(client.room).emit("updatePosition", JSON.stringify(room.getPersons()));
+        } else {
+            client.emit("update", "Please connect to a room.");
+        }
+    });    
 });
 
+
+function setPersonPosition()
+{
+
+}
 
 function deleteRoom(roomName)
 {
