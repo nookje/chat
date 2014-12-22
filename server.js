@@ -16,12 +16,7 @@ socket.on("connection", function (client) {
 
     client.on("joinserver", function(joinData) {
 
-        // create the room if it wasnt already created
-        if (rooms[joinData.roomName] === undefined) {
-            var createdAt = Math.round(+new Date()/1000);
-            rooms[joinData.roomName] = new Room(createdAt);
-        }
-        room = rooms[joinData.roomName];
+        room = getRoom(joinData.roomName);
 
         // room is already full
         if (room.addPerson(client.id, joinData) === false) {
@@ -30,10 +25,8 @@ socket.on("connection", function (client) {
                 name: joinData.name,
             };
 
-            client.emit("chat", JSON.stringify(response));
-
-            console.log('room full');
-            return false;
+            client.emit("chatToClient", JSON.stringify(response));
+            return;
         }
 
         people[client.id] = joinData;
@@ -51,15 +44,12 @@ socket.on("connection", function (client) {
 
         person.position = position;
 
-        var msg = {
-            type: 'join',
-        };    
-
         var response = {
             message: ' has joined room ' + client.room,
             name: joinData.name,
         };
-        socket.sockets.in(joinData.roomName).emit("chat", JSON.stringify(response));
+
+        socket.sockets.in(joinData.roomName).emit("chatToClient", JSON.stringify(response));
 
         socket.sockets.in(joinData.roomName).emit("updatePosition", JSON.stringify(room.getPersons()));
 
@@ -67,11 +57,16 @@ socket.on("connection", function (client) {
     });
 
 
-    client.on("send", function(data) {
+    client.on("chatToServer", function(data) {
 
         // room was cleaned by the "cron" so kick the user out
         if (client.room !== undefined && rooms[client.room] === undefined) {
-            client.emit("update", "Room was deleted, please connect to another room.");
+            var response = {
+                message: "Room was deleted, please connect to another room.",
+                name: people[client.id].name,
+            };
+
+            client.emit("chatToClient", response);
             client.leave(client.room);
             delete client.room;
             return;
@@ -79,14 +74,20 @@ socket.on("connection", function (client) {
 
         if (socket.sockets.manager.roomClients[client.id]['/'+client.room] !== undefined ) {
 
+            if (data.type == 'move') {
+                movePlayer(client, data);
+                return;
+            }
+
+            sendMessage(client, data);
+
+        } else {
             var response = {
-                message: data.message,
+                message: "Please connect to a room.",
                 name: people[client.id].name,
             };
 
-            socket.sockets.in(client.room).emit("chat", JSON.stringify(response));
-        } else {
-            client.emit("update", "Please connect to a room.");
+            client.emit("chatToClient", response);
         }
     });
 
@@ -103,7 +104,7 @@ socket.on("connection", function (client) {
                     message: people[client.id].name + " has left " + roomName,
                     name: people[client.id].name,
                 };
-                socket.sockets.in(roomName).emit("chat", JSON.stringify(response));
+                socket.sockets.in(roomName).emit("chatToClient", JSON.stringify(response));
 
                 rooms[roomName].removePerson(client.id);
 
@@ -114,41 +115,40 @@ socket.on("connection", function (client) {
             }
         }
     });
-
-
-    client.on("move", function(data) {
-
-        // room was cleaned by the "cron" so kick the user out
-        if (client.room !== undefined && rooms[client.room] === undefined) {
-            client.emit("update", "Room was deleted, please connect to another room.");
-            client.leave(client.room);
-            delete client.room;
-            return;
-        }
-
-        if (socket.sockets.manager.roomClients[client.id]['/'+client.room] !== undefined ) {
-            
-            room = rooms[client.room];
-
-            var person = room.getPerson(client.id);
-
-            person.position = data.position;
-
-            socket.sockets.in(client.room).emit("updatePosition", JSON.stringify(room.getPersons()));
-        } else {
-            client.emit("update", "Please connect to a room.");
-        }
-    });    
+    
 });
 
 
-function setPersonPosition()
+function movePlayer(client, data)
 {
+    room = rooms[client.room];
+    room.getPerson(client.id).position = data.position;
 
+    socket.sockets.in(client.room).emit("updatePosition", JSON.stringify(room.getPersons()));
+}
+
+function sendMessage(client, data)
+{
+    var response = {
+        message: data.message,
+        name: people[client.id].name,
+    };
+
+    socket.sockets.in(client.room).emit("chatToClient", JSON.stringify(response));
 }
 
 function deleteRoom(roomName)
 {
     delete rooms[roomName];
     console.log('deleting room: '  + roomName + '. rooms left: ' + Helpers.getObjectLength(rooms));
+}
+
+function getRoom(roomName)
+{
+    // create the room if it wasnt already created
+    if (rooms[roomName] === undefined) {
+        var createdAt = Math.round(+new Date()/1000);
+        rooms[roomName] = new Room(createdAt);
+    }
+    return rooms[roomName];
 }

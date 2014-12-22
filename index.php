@@ -15,7 +15,7 @@
 
     <div style="width: 306px; height: 493px; border: 1px solid green; border-top:0; border-right:0; float: left;">
         <?php for ($i = 1; $i <= 522; $i++) { ?>
-            <div class="tile" id="tile_<?= $i ?>"></div>
+            <div class="tile" id="<?= $i ?>"></div>
         <?php } ?>
     </div>
 

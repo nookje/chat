@@ -3,7 +3,7 @@ var socket = false;
 $(document).ready(function() {
     socket = io.connect("127.0.0.1:8000");
 
-    socket.on("chat", function(response) {
+    socket.on("chatToClient", function(response) {
         response = JSON.parse(response);
 
         $("#msgs").prepend("<li><b>" + response.name + "</b>: " + response.message + "</li>");
@@ -11,8 +11,6 @@ $(document).ready(function() {
 
     socket.on("disconnect", function(){
         $("#msgs").prepend("<li><strong><span class='text-warning'>The server is not available</span></strong></li>");
-        $("#msg").attr("disabled", "disabled");
-        $("#send").attr("disabled", "disabled");
     });
 
     socket.on("reconnect", function() {
@@ -20,6 +18,7 @@ $(document).ready(function() {
     });
 
     socket.on("updatePosition", function(members) {
+        members = JSON.parse(members);
         updatePosition(members);
     });
 
@@ -40,29 +39,15 @@ $(document).ready(function() {
 
 });
 
-function sendMessage()
+function sendMessage(message)
 {
-    var msg = $("#msg");
-
-    socketMsg = {
-        type: 'chat',
-        message: msg.val()
-    };
-    socket.emit("send", socketMsg);
-
-    msg.val("");
+    socket.emit("chatToServer", message);
 }
 
 function joinServer()
 {
     var room = getParameterByName('room');
-    if (room == "") {
-        room = $("#room_name").val();
-    }      
     var name = getParameterByName('name');
-    if (name == "") {
-        name = $("#name").val();
-    }      
 
     if (room != "" && name != "") {
 
@@ -72,11 +57,6 @@ function joinServer()
         };
 
         socket.emit("joinserver", joinData);
-        $("#login").hide();
-        $("#chat").show();
-        $("#msg").focus();
-        $("#msg").removeAttr("disabled");
-        $("#send").removeAttr("disabled");
     }
 
 }
@@ -90,14 +70,10 @@ function getParameterByName(name) {
 
 function updatePosition(members)
 {
+    $("div.position").removeClass('position').html("");
 
-    members = JSON.parse(members);
-
-    $.each( members, function( key , value) {
-        $("div.player_" + value.name).removeClass('position player_' + value.name).html("");
-
-        $("#tile_" + value.position).html(value.name);
-        $("#tile_" + value.position).addClass('position player_' + value.name);
+    $.each(members, function(key, value) {
+        $("#" + value.position).html(value.name).addClass('position');
     });
 }
 
@@ -105,10 +81,10 @@ function updatePosition(members)
 
 $( document ).ready(function() {
     $('div.tile').click(function() {
-        var parts = this.id.split("_");
-        socketMsg = {
-            position: parts[1]
+        message = {
+            type: "move",
+            position: this.id
         };
-        socket.emit("move", socketMsg);
+        sendMessage(message);
     });
 });
