@@ -109,7 +109,6 @@ $( document ).ready(function() {
         socketMsg = {
             position: parts[1]
         };
-
         socket.emit("move", socketMsg);
     });
 });

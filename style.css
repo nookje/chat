@@ -1,0 +1,19 @@
+div.tile {
+    float: left;
+    width: 16px;
+    height: 16px;
+    border: 1px solid green;
+    border-left: 0;
+    border-bottom: 0;
+    text-align: center;
+    font-weight: bold;
+    font-family: Arial;
+    font-size: 11px;
+}
+div.position {
+    background-color: #ccc;
+}
+
+div.tile:hover{
+    background-color:#FF0000;
+}
