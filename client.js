@@ -6,6 +6,9 @@ $(document).ready(function() {
     socket.on("chatToClient", function(response) {
         response = JSON.parse(response);
 
+        if (response.players) {
+            updatePosition(response.players);
+        }
         $("#msgs").prepend("<li><b>" + response.name + "</b>: " + response.message + "</li>");
     });
 

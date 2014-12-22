@@ -34,24 +34,19 @@ socket.on("connection", function (client) {
         client.room = joinData.roomName;
         client.join(joinData.roomName);
 
-        var person = room.getPerson(client.id);
-
         if (room.getCount() == 1) {
-            position = Helpers.randomIntFromInterval(1,16);
+            room.getPerson(client.id).position = Helpers.randomIntFromInterval(1,16);
         } else {
-            position = Helpers.randomIntFromInterval(506,522);
+            room.getPerson(client.id).position = Helpers.randomIntFromInterval(506,522);
         }
-
-        person.position = position;
 
         var response = {
             message: ' has joined room ' + client.room,
             name: joinData.name,
+            players: room.getPersons(),
         };
 
         socket.sockets.in(joinData.roomName).emit("chatToClient", JSON.stringify(response));
-
-        socket.sockets.in(joinData.roomName).emit("updatePosition", JSON.stringify(room.getPersons()));
 
         console.log('new client connected: ' + Helpers.getObjectLength(people));
     });
