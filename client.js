@@ -76,10 +76,17 @@ function updatePosition(members)
     $("div.position").removeClass('position').html("");
 
     $.each(members, function(key, value) {
-        $("#" + value.position).html(value.name).addClass('position');
+        $("#" + value.position).html(value.name + value.energy).addClass('position');
     });
 }
 
+function knockback () 
+{
+    message = {
+        type: "knockback"
+    };
+    sendMessage(message);
+}
 
 
 $( document ).ready(function() {

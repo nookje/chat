@@ -10,6 +10,10 @@ var socket      = io.listen(8000, "127.0.0.1");
 var people      = {};
 var rooms       = {};
 
+var game        = {complexity: 18, min: 1, max: 522, energy: 5};
+
+
+
 socket.set("log level", 1);
 
 socket.on("connection", function (client) {
@@ -34,10 +38,14 @@ socket.on("connection", function (client) {
         client.room = joinData.roomName;
         client.join(joinData.roomName);
 
-        if (room.getCount() == 1) {
-            room.getPerson(client.id).position = Helpers.randomIntFromInterval(1,16);
+        // init players stats, skills etc
+        room.getPerson(client.id).start = decideStartSide(joinData.roomName);
+        room.getPerson(client.id).position = decideStartPosition(client);
+        
+        if (room.getPerson(client.id).start == 'top') {
+            room.getPerson(client.id).energy = game.energy;
         } else {
-            room.getPerson(client.id).position = Helpers.randomIntFromInterval(506,522);
+            room.getPerson(client.id).energy = 0;
         }
 
         var response = {
@@ -71,6 +79,11 @@ socket.on("connection", function (client) {
 
             if (data.type == 'move') {
                 movePlayer(client, data);
+                return;
+            }
+
+            if (data.type == 'knockback') {
+                knockback(client);
                 return;
             }
 
@@ -117,10 +130,33 @@ socket.on("connection", function (client) {
 function movePlayer(client, data)
 {
     room = rooms[client.room];
-    room.getPerson(client.id).position = data.position;
+    player = room.getPerson(client.id);
+
+    var diff = data.position - player.position;
+    if (player.start == 'top') {
+        // allowed moves
+        if (diff != 1 && diff != -1 && diff != game.complexity) {
+            return;
+        }
+    } else {
+        // allowed moves
+        if (diff != 1 && diff != -1 && diff != -game.complexity) {
+            return;
+        }
+    }
+
+    if (!consumeEnergy(client, 1)) {
+        return;
+    }
+    
+    player.position = data.position;
+
+console.log(player);
 
     socket.sockets.in(client.room).emit("updatePosition", JSON.stringify(room.getPersons()));
 }
+
+
 
 function sendMessage(client, data)
 {
@@ -146,4 +182,98 @@ function getRoom(roomName)
         rooms[roomName] = new Room(createdAt);
     }
     return rooms[roomName];
+}
+
+function decideStartSide(roomName)
+{
+    room = rooms[roomName];
+
+    if (room.getCount() == 0) {
+        return 'top';
+    }
+
+    players = room.getPersons();
+
+    for (i in players) {
+        if (players[i].start == 'top') {
+            return 'bottom';
+        } else {
+            return 'top';
+        }
+    }
+}
+
+function decideStartPosition(client)
+{
+    if (room.getPerson(client.id).start == 'top') {
+        return Helpers.randomIntFromInterval(1,16);
+    } else {
+        return Helpers.randomIntFromInterval(506,522);
+    }
+}
+
+
+
+function knockback(client)
+{
+
+    opponent = getOpponent(client);
+    
+    opponent.position = parseInt(opponent.position);
+    
+    if (opponent.start == 'top') {
+        var position = opponent.position - game.complexity;
+        if (position < 1) {
+            return;
+        }
+    } else {
+        var position = opponent.position + game.complexity;
+        if (position > game.max) {
+            return;
+        }
+    }
+
+    if (!consumeEnergy(client, 4)) {
+        return;
+    }
+
+    opponent.position = position;
+    socket.sockets.in(client.room).emit("updatePosition", JSON.stringify(room.getPersons()));
+}
+
+function getOpponent(client)
+{
+    room = rooms[client.room];
+
+    players = room.getPersons();
+
+    for (i in players) {
+        if (i != client.id) {
+            var opponent = players[i];
+        }
+    }
+    return opponent;    
+}
+
+
+function consumeEnergy(client, amount)
+{
+    room = rooms[client.room];
+    player = room.getPerson(client.id);
+    
+    var diff = player.energy - amount;
+    if (player.energy == 0 || diff < 0) {
+        return false;
+    }
+
+    // consume players energy
+    player.energy = diff;
+
+    // next players turn
+    if (diff == 0) {
+        opponent = getOpponent(client);
+        opponent.energy = game.energy;
+    }
+
+    return true;
 }

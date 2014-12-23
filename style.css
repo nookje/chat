@@ -1,3 +1,7 @@
+div.clear {
+    clear: both;
+}
+
 div.tile {
     float: left;
     width: 16px;
@@ -16,4 +20,9 @@ div.position {
 
 div.tile:hover{
     background-color:#FF0000;
+}
+
+div.controls {
+    background-color: #ccc;
+    height: 50px;
 }
