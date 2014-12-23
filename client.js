@@ -25,6 +25,11 @@ $(document).ready(function() {
         updatePosition(members);
     });
 
+    socket.on("victory", function(player) {
+        player = JSON.parse(player);
+        $("#controls").html(player.name + ' has won the match').addClass('victory');
+    });
+
     $("#chat").hide();
     $("#name").focus();
 

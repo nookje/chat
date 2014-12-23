@@ -10,7 +10,7 @@ var socket      = io.listen(8000, "127.0.0.1");
 var people      = {};
 var rooms       = {};
 
-var game        = {complexity: 18, min: 1, max: 522, energy: 5};
+var game        = {complexity: 18, min: 1, max: 522, energy: 15};
 
 
 
@@ -148,14 +148,33 @@ function movePlayer(client, data)
     if (!consumeEnergy(client, 1)) {
         return;
     }
-    
+
     player.position = data.position;
 
 console.log(player);
 
+    checkVictory(client);
     socket.sockets.in(client.room).emit("updatePosition", JSON.stringify(room.getPersons()));
 }
 
+function checkVictory(client)
+{
+    room = rooms[client.room];
+    player = room.getPerson(client.id);
+
+    var victory = false;
+    if (player.start == 'top' && player.position > game.max - game.complexity) {
+        victory = true;
+    } else if (player.start == 'bottom' && player.position <= game.complexity) {
+        victory = true;
+    }
+
+    if (victory) {
+        player.energy = 0;
+        socket.sockets.in(client.room).emit("victory", JSON.stringify(player));
+    }
+
+}
 
 
 function sendMessage(client, data)

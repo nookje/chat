@@ -26,3 +26,7 @@ div.controls {
     background-color: #ccc;
     height: 50px;
 }
+
+div.victory {
+    background-color: yellow;
+}
