@@ -159,7 +159,7 @@ function movePlayer(client, data)
     if (room.wall[data.position] != undefined) {
         return;
     }
-    
+
     var diff = data.position - player.position;
     if (player.start == 'top') {
         // allowed moves
@@ -280,7 +280,7 @@ function knockback(client)
         }
     }
 
-    if (!consumeEnergy(client, 4)) {
+    if (!consumeEnergy(client, 3)) {
         return;
     }
 
