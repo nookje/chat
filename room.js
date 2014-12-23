@@ -6,6 +6,7 @@ var peopleLimit = 2;
 function Room(createdAt) {
     this.createdAt  = createdAt;
     this.people     = {};
+    this.wall       = {};
 };
 
 Room.prototype.addPerson = function(personID, data) {

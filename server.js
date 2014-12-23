@@ -87,6 +87,11 @@ socket.on("connection", function (client) {
                 return;
             }
 
+            if (data.type == 'build') {
+                build(client, data);
+                return;
+            }
+
             sendMessage(client, data);
 
         } else {
@@ -127,11 +132,34 @@ socket.on("connection", function (client) {
 });
 
 
+function build (client, data) 
+{
+    room = rooms[client.room];
+
+    if (room.wall[data.position] != undefined) {
+        return;
+    }
+    
+    if (!consumeEnergy(client, 2)) {
+        return;
+    }
+
+    room.wall[data.position] = 1;
+
+    socket.sockets.in(client.room).emit("updateWall", JSON.stringify(room.wall));
+    socket.sockets.in(client.room).emit("updatePosition", JSON.stringify(room.getPersons()));
+}
+
 function movePlayer(client, data)
 {
     room = rooms[client.room];
     player = room.getPerson(client.id);
 
+    // check if there is a wall
+    if (room.wall[data.position] != undefined) {
+        return;
+    }
+    
     var diff = data.position - player.position;
     if (player.start == 'top') {
         // allowed moves

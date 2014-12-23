@@ -30,6 +30,16 @@ $(document).ready(function() {
         $("#controls").html(player.name + ' has won the match').addClass('victory');
     });
 
+    socket.on("updateWall", function(wall) {
+        wall = JSON.parse(wall);
+
+        $.each(wall, function(key, value) {
+            $("#" + key).addClass('wall');
+        });
+
+        $("#controls").html(player.name + ' has won the match').addClass('victory');
+    });
+
     $("#chat").hide();
     $("#name").focus();
 
@@ -93,11 +103,22 @@ function knockback ()
     sendMessage(message);
 }
 
+function build () 
+{
+    var build = $("#build");
+    if (build.hasClass('build')) {
+        build.removeClass('build');
+    } else {
+        build.addClass('build');
+    }
+}
 
 $( document ).ready(function() {
     $('div.tile').click(function() {
+
+        var type = $("#build").hasClass('build') ? 'build' : 'move';
         message = {
-            type: "move",
+            type: type,
             position: this.id
         };
         sendMessage(message);

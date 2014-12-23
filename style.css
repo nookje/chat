@@ -30,3 +30,11 @@ div.controls {
 div.victory {
     background-color: yellow;
 }
+
+div.wall {
+    background-color: #000;
+}
+
+a.build {
+    background-color: #000;
+}

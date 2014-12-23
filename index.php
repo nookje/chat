@@ -20,9 +20,8 @@
         <div class="clear"></div>
 
         <div id="controls" class="controls">
-            <a href="javascript:;" onclick="endTurn();">End turn</a>
-            <a href="javascript:;" onclick="haste();">Haste</a>
             <a href="javascript:;" onclick="knockback();">Knockback</a>
+            <a id="build" href="javascript:;" onclick="build();">Build</a>
         </div>
 
 
