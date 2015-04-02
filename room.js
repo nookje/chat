@@ -1,18 +1,21 @@
 var Helpers = require('./helpers.js');
 var Helpers = new Helpers();
 
-var peopleLimit = 2;
+var peopleLimit = 2000;
 
 function Room(createdAt) {
     this.createdAt  = createdAt;
     this.people     = {};
-    this.wall       = {};
+    this.agentId    = "";
 };
 
 Room.prototype.addPerson = function(personID, data) {
 
     if (Helpers.getObjectLength(this.people) < peopleLimit) {
         this.people[personID] = data;
+        if (data.userType == 'agent') {
+            this.agentId = personID;
+        }
     } else {
         return false;
     }

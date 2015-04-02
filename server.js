@@ -9,10 +9,8 @@ var socket      = io.listen(8000, "127.0.0.1");
 
 var people      = {};
 var rooms       = {};
-
-var game        = {complexity: 18, min: 1, max: 522, energy: 15};
-
-
+var clients     = {};
+var sessions    = {};
 
 socket.set("log level", 1);
 
@@ -38,23 +36,17 @@ socket.on("connection", function (client) {
         client.room = joinData.roomName;
         client.join(joinData.roomName);
 
-        // init players stats, skills etc
-        room.getPerson(client.id).start = decideStartSide(joinData.roomName);
-        room.getPerson(client.id).position = decideStartPosition(client);
-        
-        if (room.getPerson(client.id).start == 'top') {
-            room.getPerson(client.id).energy = game.energy;
-        } else {
-            room.getPerson(client.id).energy = 0;
-        }
+        clients[client.id] = client;
+
+        sessions[joinData.sessionId] = client.id;
 
         var response = {
             message: ' has joined room ' + client.room,
             name: joinData.name,
-            players: room.getPersons(),
         };
 
         socket.sockets.in(joinData.roomName).emit("chatToClient", JSON.stringify(response));
+        socket.sockets.in(joinData.roomName).emit("updateClientList", JSON.stringify(people));
 
         console.log('new client connected: ' + Helpers.getObjectLength(people));
     });
@@ -76,21 +68,6 @@ socket.on("connection", function (client) {
         }
 
         if (socket.sockets.manager.roomClients[client.id]['/'+client.room] !== undefined ) {
-
-            if (data.type == 'move') {
-                movePlayer(client, data);
-                return;
-            }
-
-            if (data.type == 'knockback') {
-                knockback(client);
-                return;
-            }
-
-            if (data.type == 'build') {
-                build(client, data);
-                return;
-            }
 
             sendMessage(client, data);
 
@@ -125,84 +102,13 @@ socket.on("connection", function (client) {
                     deleteRoom(roomName);
                 }
                 delete people[client.id];
+                delete clients[client.id];
+                socket.sockets.in(roomName).emit("updateClientList", JSON.stringify(people));
             }
         }
     });
     
 });
-
-
-function build (client, data) 
-{
-    room = rooms[client.room];
-
-    if (room.wall[data.position] != undefined) {
-        return;
-    }
-    
-    if (!consumeEnergy(client, 2)) {
-        return;
-    }
-
-    room.wall[data.position] = 1;
-
-    socket.sockets.in(client.room).emit("updateWall", JSON.stringify(room.wall));
-    socket.sockets.in(client.room).emit("updatePosition", JSON.stringify(room.getPersons()));
-}
-
-function movePlayer(client, data)
-{
-    room = rooms[client.room];
-    player = room.getPerson(client.id);
-
-    // check if there is a wall
-    if (room.wall[data.position] != undefined) {
-        return;
-    }
-
-    var diff = data.position - player.position;
-    if (player.start == 'top') {
-        // allowed moves
-        if (diff != 1 && diff != -1 && diff != game.complexity) {
-            return;
-        }
-    } else {
-        // allowed moves
-        if (diff != 1 && diff != -1 && diff != -game.complexity) {
-            return;
-        }
-    }
-
-    if (!consumeEnergy(client, 1)) {
-        return;
-    }
-
-    player.position = data.position;
-
-console.log(player);
-
-    checkVictory(client);
-    socket.sockets.in(client.room).emit("updatePosition", JSON.stringify(room.getPersons()));
-}
-
-function checkVictory(client)
-{
-    room = rooms[client.room];
-    player = room.getPerson(client.id);
-
-    var victory = false;
-    if (player.start == 'top' && player.position > game.max - game.complexity) {
-        victory = true;
-    } else if (player.start == 'bottom' && player.position <= game.complexity) {
-        victory = true;
-    }
-
-    if (victory) {
-        player.energy = 0;
-        socket.sockets.in(client.room).emit("victory", JSON.stringify(player));
-    }
-
-}
 
 
 function sendMessage(client, data)
@@ -212,7 +118,22 @@ function sendMessage(client, data)
         name: people[client.id].name,
     };
 
-    socket.sockets.in(client.room).emit("chatToClient", JSON.stringify(response));
+
+    if (people[client.id].userType == 'client') {
+        recipient = clients[rooms[client.room].agentId];
+        response.destinatar = client.id;
+    } else if (people[client.id].userType == 'agent') {
+        recipient = clients[data.recipient];
+        response.destinatar = recipient.id;
+    }
+
+    response = JSON.stringify(response);
+
+    // trimitem mesajul la destinatar
+    recipient.emit("chatToClient", response);
+
+    // trimitem mesajul si la omul care a facut send
+    client.emit("chatToClient", response);
 }
 
 function deleteRoom(roomName)
@@ -229,98 +150,4 @@ function getRoom(roomName)
         rooms[roomName] = new Room(createdAt);
     }
     return rooms[roomName];
-}
-
-function decideStartSide(roomName)
-{
-    room = rooms[roomName];
-
-    if (room.getCount() == 0) {
-        return 'top';
-    }
-
-    players = room.getPersons();
-
-    for (i in players) {
-        if (players[i].start == 'top') {
-            return 'bottom';
-        } else {
-            return 'top';
-        }
-    }
-}
-
-function decideStartPosition(client)
-{
-    if (room.getPerson(client.id).start == 'top') {
-        return Helpers.randomIntFromInterval(1,16);
-    } else {
-        return Helpers.randomIntFromInterval(506,522);
-    }
-}
-
-
-
-function knockback(client)
-{
-
-    opponent = getOpponent(client);
-    
-    opponent.position = parseInt(opponent.position);
-    
-    if (opponent.start == 'top') {
-        var position = opponent.position - game.complexity;
-        if (position < 1) {
-            return;
-        }
-    } else {
-        var position = opponent.position + game.complexity;
-        if (position > game.max) {
-            return;
-        }
-    }
-
-    if (!consumeEnergy(client, 3)) {
-        return;
-    }
-
-    opponent.position = position;
-    socket.sockets.in(client.room).emit("updatePosition", JSON.stringify(room.getPersons()));
-}
-
-function getOpponent(client)
-{
-    room = rooms[client.room];
-
-    players = room.getPersons();
-
-    for (i in players) {
-        if (i != client.id) {
-            var opponent = players[i];
-        }
-    }
-    return opponent;    
-}
-
-
-function consumeEnergy(client, amount)
-{
-    room = rooms[client.room];
-    player = room.getPerson(client.id);
-    
-    var diff = player.energy - amount;
-    if (player.energy == 0 || diff < 0) {
-        return false;
-    }
-
-    // consume players energy
-    player.energy = diff;
-
-    // next players turn
-    if (diff == 0) {
-        opponent = getOpponent(client);
-        opponent.energy = game.energy;
-    }
-
-    return true;
 }
