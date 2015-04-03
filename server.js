@@ -32,22 +32,23 @@ socket.on("connection", function (client) {
         }
 
         people[client.id] = joinData;
-        
+
         client.room = joinData.roomName;
         client.join(joinData.roomName);
 
         clients[client.id] = client;
-
-        sessions[joinData.sessionId] = client.id;
 
         var response = {
             message: ' has joined room ' + client.room,
             name: joinData.name,
         };
 
-        socket.sockets.in(joinData.roomName).emit("chatToClient", JSON.stringify(response));
-        socket.sockets.in(joinData.roomName).emit("updateClientList", JSON.stringify(people));
+        // client.id changes on refresh/reconnect so remember him based on session
+        sessions[joinData.sessionId + "-" + joinData.name] = client.id;
 
+        socket.sockets.in(joinData.roomName).emit("chatToClient", JSON.stringify(response));
+        socket.sockets.in(joinData.roomName).emit("updateClientList", JSON.stringify(room.getPersons()));
+        
         console.log('new client connected: ' + Helpers.getObjectLength(people));
     });
 
@@ -98,12 +99,13 @@ socket.on("connection", function (client) {
 
                 rooms[roomName].removePerson(client.id);
 
+                socket.sockets.in(roomName).emit("updateClientList", JSON.stringify(rooms[roomName].getPersons()));
+
                 if (Helpers.getObjectLength(rooms[roomName].getPersons()) === 0) {
                     deleteRoom(roomName);
                 }
                 delete people[client.id];
                 delete clients[client.id];
-                socket.sockets.in(roomName).emit("updateClientList", JSON.stringify(people));
             }
         }
     });
@@ -118,21 +120,25 @@ function sendMessage(client, data)
         name: people[client.id].name,
     };
 
+    if (people[client.id].userType == 'agent') {
 
-    if (people[client.id].userType == 'client') {
-        recipient = clients[rooms[client.room].agentId];
-        response.destinatar = client.id;
-    } else if (people[client.id].userType == 'agent') {
-        recipient = clients[data.recipient];
-        response.destinatar = recipient.id;
+        response.destinatar = data.to;
+    
+        // find client.id who is associated to this recipient
+        otherRecipient = sessions[data.to];
+    } else {
+
+        // find agent of this room
+        otherRecipient = rooms[client.room].agentId;
+
+        destinatar = people[client.id].sessionId + "-" + people[client.id].name;
+        response.destinatar = destinatar;
     }
 
     response = JSON.stringify(response);
+    clients[otherRecipient].emit("chatToClient", response);
 
-    // trimitem mesajul la destinatar
-    recipient.emit("chatToClient", response);
-
-    // trimitem mesajul si la omul care a facut send
+    // send message to self
     client.emit("chatToClient", response);
 }
 
